@@ -1,4 +1,4 @@
 # AndroidPlugin
-1. 运行需要的Plugin--->uploadArchives
-2. 项目引用 plugin的 resources 文件名字。
+1. 运行需要的Plugin--->uploadArchives 重新生成repo中的plugin，
+2. 项目更改需要的引用。
  

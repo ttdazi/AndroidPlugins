@@ -1,2 +1,2 @@
 include ':app', ':timePlugin'
-rootProject.name='PluginDemo'
+rootProject.name='AndroidPlugins'
