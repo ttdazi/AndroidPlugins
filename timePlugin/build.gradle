@@ -8,7 +8,7 @@ dependencies {
 repositories {
     mavenCentral()
 }
-group='com.adz.gradle.plugin'
+group='com.ttdazi.plugins'
 version='1.0.0'
 uploadArchives{
     repositories{
