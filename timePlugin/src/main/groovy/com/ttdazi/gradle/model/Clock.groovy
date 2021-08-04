@@ -1,4 +1,4 @@
-package com.ttdazi.gradle.modle;
+package com.ttdazi.gradle.model;
 
 /**
  * author: Y_Qing

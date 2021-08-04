@@ -1,0 +1,25 @@
+apply plugin: 'groovy'
+apply plugin: 'maven'
+dependencies {
+    implementation gradleApi()
+    implementation localGroovy()
+    compileOnly 'com.android.tools.build:gradle:3.5.1'
+    // ASM 相关
+    implementation 'org.ow2.asm:asm:7.1'
+    implementation 'org.ow2.asm:asm-util:7.1'
+    implementation 'org.ow2.asm:asm-commons:7.1'
+    compileOnly 'com.android.tools.build:gradle-api:3.5.1'
+}
+
+repositories {
+    mavenCentral()
+}
+group='com.ttdazi.plugins'
+version='1.0.0'
+uploadArchives{
+    repositories{
+        mavenDeployer{
+            repository(url: uri('../repo'))
+        }
+    }
+}

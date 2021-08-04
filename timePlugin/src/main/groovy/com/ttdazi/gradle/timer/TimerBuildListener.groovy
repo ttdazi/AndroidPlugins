@@ -1,6 +1,6 @@
 package com.ttdazi.gradle.timer
 
-import com.ttdazi.gradle.modle.Clock;
+import com.ttdazi.gradle.model.Clock;
 import org.gradle.BuildListener;
 import org.gradle.BuildResult
 import org.gradle.api.Task

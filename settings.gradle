@@ -1,2 +1,3 @@
+include ':asmtransform'
 include ':app', ':timePlugin'
 rootProject.name='AndroidPlugins'
