@@ -1,6 +1,14 @@
 package com.ttdazi.gradle.transform
 
-import com.android.build.api.transform.*
+import com.android.build.api.transform.DirectoryInput
+import com.android.build.api.transform.JarInput
+import com.android.build.api.transform.QualifiedContent
+import com.android.build.api.transform.Status
+import com.android.build.api.transform.Transform
+import com.android.build.api.transform.TransformException
+import com.android.build.api.transform.TransformInput
+import com.android.build.api.transform.TransformInvocation
+import com.android.build.api.transform.TransformOutputProvider
 import com.android.build.gradle.internal.pipeline.TransformManager
 import groovyjarjarasm.asm.tree.AnnotationNode
 import groovyjarjarasm.asm.tree.ClassNode
@@ -10,22 +18,34 @@ import org.apache.commons.io.FileUtils
 class AspectJTransform extends Transform {
     @Override
     String getName() {
-        return "AspectJTransform";
+        return "AspectJTransform"
     }
 
+    /**
+     * 出来输入的类型，class文件。
+     * @return
+     */
     @Override
     Set<QualifiedContent.ContentType> getInputTypes() {
-        return TransformManager.CONTENT_CLASS;
+        return TransformManager.CONTENT_CLASS
     }
 
+    /**
+     * 处理的范围
+     * @return
+     */
     @Override
     Set<? super QualifiedContent.Scope> getScopes() {
-        return TransformManager.SCOPE_FULL_PROJECT;
+        return TransformManager.SCOPE_FULL_PROJECT
     }
 
+    /**
+     * 是否是增量
+     * @return
+     */
     @Override
     boolean isIncremental() {
-        return false;
+        return false
     }
 
     @Override
@@ -41,18 +61,47 @@ class AspectJTransform extends Transform {
             outputProvider.deleteAll();
         }
         transformInvocation.getInputs().each { TransformInput input ->
-//            input.jarInputs.each { JarInput jarInput ->
-//                //处理Jar
-//                processJarInputWithIncremental(jarInput, outputProvider, isIncremental)
-//            }
+            input.jarInputs.each { JarInput jarInput ->
+                //处理Jar
+                processJarInput(jarInput, outputProvider, isIncremental)
+            }
             input.directoryInputs.each { DirectoryInput directoryInput ->
                 //处理文件
-                processDirectoryInputWithIncremental(directoryInput, outputProvider, isIncremental)
+                processDirectory(directoryInput, outputProvider, isIncremental)
             }
         }
+        insertCodeIntoJar(routeJarInput, transformInvocation.outputProvider)
     }
 
-    void processDirectoryInputWithIncremental(DirectoryInput directoryInput, TransformOutputProvider outputProvider, boolean isIncremental) {
+    void insertCodeIntoJar() {
+        //修改 EasySCM方法
+
+    }
+
+    void processJarInput(JarInput jarInput, TransformOutputProvider outputProvider, boolean isIncremental) {
+        def destFile = outputProvider.getContentLocation(jarInput.getFile().getAbsolutePath(),
+                jarInput.contentTypes, jarInput.scopes, Format.JAR)
+        if (isIncremental) {
+            switch (jarInput.status) {
+                case Status.NOTCHANGED:
+                    break
+                case Status.REMOVED:
+                    if (destFile.exists()) {
+                        FileUtils.forceDelete(destFile)
+                    }
+                    break
+                case Status.ADDED:
+                case Status.CHANGED:
+                    FileUtils.touch(destFile)
+                    FileUtils.copyFile(jarInput.file, destFile)
+                    break
+            }
+        }
+
+
+    }
+
+    void processDirectory(DirectoryInput directoryInput, TransformOutputProvider outputProvider, boolean isIncremental) {
         File dest = outputProvider.getContentLocation(
                 directoryInput.getFile().getAbsolutePath(),
                 directoryInput.getContentTypes(),
@@ -87,7 +136,7 @@ class AspectJTransform extends Transform {
                 case Status.ADDED:
                 case Status.CHANGED:
                     FileUtils.touch(destFile)
-                    transformSingleFile(inputFile, destFile, srcDirPath)
+                    transformSingleFile(inputFile, destFile)
                     break
             }
         }
@@ -98,9 +147,6 @@ class AspectJTransform extends Transform {
     }
 
     void transformDirectoryInput(File input, File dest) {
-        //TODO do some transform
-        //将修改过的字节码copy到dest，就可以实现编译期间干预字节码的目的了
-//        ASM生成字节码
         if (dest.exists()) {
             FileUtils.deleteDirectory(dest)
         }
@@ -121,8 +167,8 @@ class AspectJTransform extends Transform {
 
         FileUtils.copyDirectory(input, dest)
     }
-
-    void transformSingleFile(File inputFile, File destFile, String srcDirPath) {
+    def ANNOTATION_DESC = "com.aidazi.annotations.ScActionAnnotation"//注解
+    void transformSingleFile(File inputFile, File destFile) {
         def is = new FileInputStream(inputFile)
         ClassReader reader = new ClassReader(is)
         ClassNode node = new ClassNode()
@@ -131,10 +177,16 @@ class AspectJTransform extends Transform {
         for (AnnotationNode an : list) {
             if (ANNOTATION_DESC == an.desc) {
                 def path = an.values[1]
-                routeMap[path] = className
+                System.println("dddddd" + path + "..")
+//                routeMap[path] = getClassName(inputFile)
                 break
             }
         }
         FileUtils.copyFile(inputFile, destFile)
+    }
+
+    String getClassName(String root, String classPath) {
+        return classPath.substring(root.length() + 1, classPath.length() - 6)
+                .replaceAll("/", ".")
     }
 }
