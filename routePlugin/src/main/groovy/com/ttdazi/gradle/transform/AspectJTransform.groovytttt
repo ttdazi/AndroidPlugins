@@ -14,14 +14,13 @@ public class AspectJTransform extends Transform {
     }
 
     /**
-     * 出来输入的类型，class文件。
+     * 处理输入的类型，class文件。
      * @return
      */
     @Override
     Set<QualifiedContent.ContentType> getInputTypes() {
         return TransformManager.CONTENT_CLASS
     }
-
     /**
      * 处理的范围
      * @return
@@ -30,7 +29,6 @@ public class AspectJTransform extends Transform {
     Set<? super QualifiedContent.Scope> getScopes() {
         return TransformManager.SCOPE_FULL_PROJECT
     }
-
     /**
      * 是否是增量
      * @return

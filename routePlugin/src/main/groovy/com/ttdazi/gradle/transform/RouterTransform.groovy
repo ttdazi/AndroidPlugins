@@ -83,8 +83,9 @@ public class RouterTransform extends Transform {
         }
         def eTime = System.currentTimeMillis()
         println("route map:" + routeMap)
-        insertCodeIntoJar(routeJarInput, transformInvocation.outputProvider)
-
+        if(routeJarInput!=null){
+            insertCodeIntoJar(routeJarInput, transformInvocation.outputProvider)
+        }
         println("===========route transform finished:" + (eTime - sTime))
     }
 

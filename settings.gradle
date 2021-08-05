@@ -1,4 +1,3 @@
-include ':mylibrary'
 include ':routePlugin'
 include ':app', ':timePlugin'
 rootProject.name='AndroidPlugins'
