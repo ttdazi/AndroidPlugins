@@ -1,8 +1,5 @@
 package com.ttdazi.gradle.transform
 
-import com.android.build.api.transform.QualifiedContent
-import com.android.build.api.transform.Transform
-
 import com.android.build.api.transform.*
 import com.android.build.gradle.internal.pipeline.TransformManager
 import javassist.ClassPool
@@ -21,7 +18,7 @@ import java.util.jar.JarFile
 import java.util.jar.JarOutputStream
 import java.util.zip.ZipEntry
 
-public class RouterTransform extends Transform {
+class RouterTransform extends Transform {
     private static final String DEFAULT_NAME = "RouterTransform"
     Project project
 
@@ -50,7 +47,7 @@ public class RouterTransform extends Transform {
     }
 
     def routeMap = [:]
-    static final ROUTE_NAME = ":escm-api:"
+    static final ROUTE_NAME = ":escm-api"
 
     @Override
     void transform(TransformInvocation transformInvocation) throws TransformException, InterruptedException, IOException {
@@ -61,7 +58,7 @@ public class RouterTransform extends Transform {
         outputProvider.deleteAll()
         for (TransformInput input : inputs) {
             for (DirectoryInput dirInput : input.directoryInputs) {
-                println("---AAAdir:"+dirInput)
+                println("---AAAdir:" + dirInput)
                 readClassWithPath(dirInput.file)
                 File dest = outputProvider.getContentLocation(dirInput.name,
                         dirInput.contentTypes,
@@ -70,7 +67,7 @@ public class RouterTransform extends Transform {
                 FileUtils.copyDirectory(dirInput.file, dest)
             }
             for (JarInput jarInput : input.jarInputs) {
-                println("---AAAjarInput:"+jarInput)
+                println("---AAAjarInput:" + jarInput)
                 if (jarInput.name.startsWith(ROUTE_NAME)) {
                     routeJarInput = jarInput
                 }
@@ -83,7 +80,7 @@ public class RouterTransform extends Transform {
         }
         def eTime = System.currentTimeMillis()
         println("route map:" + routeMap)
-        if(routeJarInput!=null){
+        if (routeJarInput != null) {
             insertCodeIntoJar(routeJarInput, transformInvocation.outputProvider)
         }
         println("===========route transform finished:" + (eTime - sTime))
@@ -117,11 +114,13 @@ public class RouterTransform extends Transform {
         if (tmp.exists()) tmp.delete()
         def file = new JarFile(jarFile)
         def dest = getDestFile(jarInput, out)
+        println("insertCodeIntoJar---" + jarInput)
         Enumeration enumeration = file.entries()
         JarOutputStream jos = new JarOutputStream(new FileOutputStream(tmp))
         while (enumeration.hasMoreElements()) {
             JarEntry jarEntry = enumeration.nextElement()
             String entryName = jarEntry.name
+            println("insert---$entryName")
             ZipEntry zipEntry = new ZipEntry(entryName)
             InputStream is = file.getInputStream(jarEntry)
             jos.putNextEntry(zipEntry)
@@ -130,6 +129,7 @@ public class RouterTransform extends Transform {
             } else {
                 jos.write(IOUtils.toByteArray(is))
             }
+//            jos.write(IOUtils.toByteArray(is))
             is.close()
             jos.closeEntry()
         }
@@ -137,19 +137,19 @@ public class RouterTransform extends Transform {
         file.close()
         FileUtils.copyFile(tmp, dest)
     }
-
     private static final String ROUTE_MAP_CLASS_NAME = "com.aidazi.servercenter.EasySCM"
-    private static
-    final String ROUTE_MAP_CLASS_FILE_NAME = ROUTE_MAP_CLASS_NAME.replaceAll("\\.", "/") + ".class"
+//    com/aidazi/servercenter/EasySCM.class
+    private static final String ROUTE_MAP_CLASS_FILE_NAME = ROUTE_MAP_CLASS_NAME.replaceAll("\\.", "/") + ".class"
 
     private boolean isRouteMapClass(String entryName) {
-        return ROUTE_MAP_CLASS_FILE_NAME == entryName
+        return entryName.startsWith(ROUTE_MAP_CLASS_FILE_NAME)
     }
 
     private byte[] hackRouteMap(File jarFile) {
         ClassPool pool = ClassPool.getDefault()
         pool.insertClassPath(jarFile.absolutePath)
         CtClass ctClass = pool.get(ROUTE_MAP_CLASS_NAME)
+        println("hack--router$ctClass")
         CtMethod method = ctClass.getDeclaredMethod("loadInto")
         StringBuffer code = new StringBuffer("{")
         for (String key : routeMap.keySet()) {
@@ -224,7 +224,7 @@ public class RouterTransform extends Transform {
 
     //获取类名
     String getClassName(String root, String classPath) {
-        println("BBBB"+classPath)
+        println("BBBB" + classPath)
         return classPath.substring(root.length() + 1, classPath.length() - 6)
                 .replaceAll("/", ".")       // unix/linux
                 .replaceAll("\\\\", ".")    //windows
